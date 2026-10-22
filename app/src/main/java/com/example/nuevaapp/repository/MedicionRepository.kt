@@ -19,4 +19,8 @@ class MedicionRepository(private val medicionDao: MedicionDao) {
     suspend fun eliminarMedicion(medicion: Medicion) {
         medicionDao.eliminarMedicion(medicion)
     }
+    // Agrega esta función dentro de tu clase MedicionRepository
+    fun buscarMediciones(busqueda: String): Flow<List<Medicion>> {
+        return medicionDao.buscarMediciones(busqueda)
+    }
 }

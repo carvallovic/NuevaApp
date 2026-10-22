@@ -14,6 +14,10 @@ interface MedicionDao {
     @Query("SELECT * FROM tabla_mediciones ORDER BY fecha_registro DESC")
     fun obtenerTodasLasMediciones(): Flow<List<Medicion>>
 
+    // QUERY DE BÚSQUEDA: Filtra registros por observaciones o unidad (Necesario para el Historial)
+    @Query("SELECT * FROM tabla_mediciones WHERE observaciones LIKE '%' || :busqueda || '%' OR unidad LIKE '%' || :busqueda || '%' ORDER BY fecha_registro DESC")
+    fun buscarMediciones(busqueda: String): Flow<List<Medicion>>
+
     // QUERY: Filtra las mediciones de un equipo en específico por su ID
     @Query("SELECT * FROM tabla_mediciones WHERE equipo_id = :equipoId ORDER BY fecha_registro DESC")
     fun obtenerMedicionesPorEquipo(equipoId: Int): Flow<List<Medicion>>
