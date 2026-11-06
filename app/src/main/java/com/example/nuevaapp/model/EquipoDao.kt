@@ -12,9 +12,9 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface EquipoDao {
 
-    // QUERY: Obtiene todos los equipos ordenados alfabéticamente por nombre.
+    // QUERY: Obtiene todos los equipos ordenados ascendentemente por id.
     // Retorna un Flow para emitir datos en tiempo real cuando la tabla SQLite sufra cambios.
-    @Query("SELECT * FROM tabla_equipos ORDER BY nombre_equipo ASC")
+    @Query("SELECT * FROM tabla_equipos ORDER BY id ASC")
     fun obtenerTodosLosEquipos(): Flow<List<Equipo>>
 
     // QUERY: Filtra y busca un equipo por su ID único.

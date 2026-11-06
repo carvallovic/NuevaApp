@@ -117,6 +117,7 @@ fun AppNavigation() {
 
             MedicionScreen(
                 viewModel = medicionViewModel,
+                equipoViewModel = equipoViewModel,
                 registroId = registroId,
                 onVolver = { navController.popBackStack() }
             )
