@@ -2,10 +2,11 @@ package com.example.nuevaapp.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
-
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+val InduztekBackground = Color(0xFF0A0E17)
+val InduztekSurface = Color(0xFF131A29)
+val InduztekSurfaceVariant = Color(0xFF1B2438)
+val InduztekPrimary = Color(0xFF5AC8FA)
+val InduztekSecondary = Color(0xFFF5C518)
+val InduztekTextLight = Color(0xFFFFFFFF)
+val InduztekTextMuted = Color(0xFFA0ABC0)
+val InduztekError = Color(0xFFFF5252)

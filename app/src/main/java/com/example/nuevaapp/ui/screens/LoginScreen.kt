@@ -1,17 +1,21 @@
 package com.example.nuevaapp.ui.screens
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.nuevaapp.viewmodel.AuthState
 import com.example.nuevaapp.viewmodel.AuthViewModel
@@ -19,15 +23,13 @@ import com.example.nuevaapp.viewmodel.AuthViewModel
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
-    viewModel: AuthViewModel = viewModel() // Inyectamos el ViewModel
+    viewModel: AuthViewModel = viewModel()
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
-    // Observamos el estado del ViewModel
     val authState by viewModel.authState.collectAsState()
 
-    // Si el estado es Success, navegamos y reseteamos el estado para no hacer loops
     LaunchedEffect(authState) {
         if (authState is AuthState.Success) {
             onLoginSuccess()
@@ -43,33 +45,27 @@ fun LoginScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Título estilizado
-        Text(
-            text = "Induztek",
-            style = MaterialTheme.typography.displaySmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-        Text(
-            text = "Portal de Mantenimiento",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.secondary
-        )
+        // Logo Corporativo Induztek
+        InduztekLogo()
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(40.dp))
 
         // Campo de Correo con Ícono
         OutlinedTextField(
             value = email,
             onValueChange = {
                 email = it
-                viewModel.resetState() // Limpiamos errores si el usuario vuelve a escribir
+                viewModel.resetState()
             },
             label = { Text("Correo Electrónico") },
-            leadingIcon = { Icon(Icons.Default.Email, contentDescription = "Email Icon") },
+            leadingIcon = { Icon(Icons.Default.Email, contentDescription = "Email Icon", tint = MaterialTheme.colorScheme.primary) },
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            singleLine = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+            )
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -82,11 +78,15 @@ fun LoginScreen(
                 viewModel.resetState()
             },
             label = { Text("Contraseña") },
-            leadingIcon = { Icon(Icons.Default.Lock, contentDescription = "Lock Icon") },
+            leadingIcon = { Icon(Icons.Default.Lock, contentDescription = "Lock Icon", tint = MaterialTheme.colorScheme.primary) },
             visualTransformation = PasswordVisualTransformation(),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            singleLine = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+            )
         )
 
         // Mostrar mensaje de error si existe
@@ -106,18 +106,22 @@ fun LoginScreen(
             onClick = { viewModel.iniciarSesion(email, password) },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(50.dp),
+                .height(52.dp),
             shape = RoundedCornerShape(12.dp),
-            enabled = authState !is AuthState.Loading // Deshabilitar mientras carga
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.secondary,
+                contentColor = Color(0xFF0A0E17)
+            ),
+            enabled = authState !is AuthState.Loading
         ) {
             if (authState is AuthState.Loading) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp),
-                    color = MaterialTheme.colorScheme.onPrimary,
+                    color = Color(0xFF0A0E17),
                     strokeWidth = 2.dp
                 )
             } else {
-                Text("Iniciar Sesión", fontSize = MaterialTheme.typography.titleMedium.fontSize)
+                Text("Iniciar Sesión", fontSize = MaterialTheme.typography.titleMedium.fontSize, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -129,12 +133,78 @@ fun LoginScreen(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp)
         ) {
-            Column(modifier = Modifier.padding(12.dp)) {
-                Text("Perfiles de prueba (Clave: 123456):", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(4.dp))
+            Column(modifier = Modifier.padding(14.dp)) {
+                Text("Perfiles de prueba (Clave: 123456):", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary)
+                Spacer(modifier = Modifier.height(6.dp))
                 Text("• ADMIN: admin@induztek.cl", style = MaterialTheme.typography.bodySmall)
                 Text("• TECNICO: tecnico@induztek.cl", style = MaterialTheme.typography.bodySmall)
                 Text("• CLIENTE: cliente@induztek.cl", style = MaterialTheme.typography.bodySmall)
+            }
+        }
+    }
+}
+
+@Composable
+fun InduztekLogo() {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Box(
+                modifier = Modifier.size(68.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val center = androidx.compose.ui.geometry.Offset(size.width / 2f, size.height / 2f)
+                    val radius = size.width / 2f - 4f
+
+                    drawCircle(
+                        color = Color(0xFF7AC1EB),
+                        radius = radius,
+                        center = center,
+                        style = androidx.compose.ui.graphics.drawscope.Stroke(width = 6f)
+                    )
+                    drawCircle(
+                        color = Color(0xFFF5C518),
+                        radius = radius * 0.75f,
+                        center = center,
+                        style = androidx.compose.ui.graphics.drawscope.Stroke(width = 5f)
+                    )
+                }
+                Icon(
+                    imageVector = Icons.Default.FlashOn,
+                    contentDescription = "Rayo",
+                    tint = Color(0xFFF5C518),
+                    modifier = Modifier.size(34.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column {
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(
+                        text = "Induz",
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    Text(
+                        text = "tek",
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF7AC1EB)
+                    )
+                }
+                Text(
+                    text = "SERVICIOS ELÉCTRICOS",
+                    style = MaterialTheme.typography.labelSmall,
+                    letterSpacing = 2.sp,
+                    color = Color(0xFFA0ABC0)
+                )
             }
         }
     }
