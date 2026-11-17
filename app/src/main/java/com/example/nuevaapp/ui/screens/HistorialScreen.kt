@@ -1,5 +1,6 @@
 package com.example.nuevaapp.ui.screens
 
+import android.net.Uri
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -13,7 +14,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.example.nuevaapp.model.Medicion
 import com.example.nuevaapp.viewmodel.HistorialViewModel
 
@@ -139,6 +142,17 @@ fun HistorialItem(
                     Text(
                         text = "Obs: ${medicion.observaciones}",
                         style = MaterialTheme.typography.bodySmall
+                    )
+                }
+                if (medicion.fotoUri.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    AsyncImage(
+                        model = Uri.parse(medicion.fotoUri),
+                        contentDescription = "Miniatura foto",
+                        modifier = Modifier
+                            .size(60.dp)
+                            .padding(2.dp),
+                        contentScale = ContentScale.Crop
                     )
                 }
             }

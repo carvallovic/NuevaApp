@@ -6,7 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 // Se registran ambas entidades en el parámetro 'entities'
-@Database(entities = [Equipo::class, Medicion::class], version = 1, exportSchema = false)
+@Database(entities = [Equipo::class, Medicion::class], version = 2, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun equipoDao(): EquipoDao
@@ -24,7 +24,7 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "nueva_app_database.db"
-                ).build()
+                ).fallbackToDestructiveMigration(true).build()
                 INSTANCE = instance
                 instance
             }

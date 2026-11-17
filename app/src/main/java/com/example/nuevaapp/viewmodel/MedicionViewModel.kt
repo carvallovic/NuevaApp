@@ -37,8 +37,8 @@ class MedicionViewModel(private val repository: MedicionRepository) : ViewModel(
     }
 
     fun agregarMedicion(medicion: Medicion) {
-        if (medicion.equipoId <= 0 || medicion.valor <= 0.0) {
-            _uiState.update { it.copy(error = "Ingrese un ID de equipo y valor válidos.") }
+        if (medicion.equipoId <= 0 || medicion.valor <= 0.0 || medicion.fotoUri.isBlank()) {
+            _uiState.update { it.copy(error = "Debe seleccionar un equipo, ingresar un valor válido y adjuntar al menos una fotografía.") }
             return
         }
 
@@ -50,8 +50,8 @@ class MedicionViewModel(private val repository: MedicionRepository) : ViewModel(
     }
 
     fun editarMedicion(medicion: Medicion) {
-        if (medicion.equipoId <= 0 || medicion.valor <= 0.0) {
-            _uiState.update { it.copy(error = "Ingrese un ID de equipo y valor válidos.") }
+        if (medicion.equipoId <= 0 || medicion.valor <= 0.0 || medicion.fotoUri.isBlank()) {
+            _uiState.update { it.copy(error = "Debe seleccionar un equipo, ingresar un valor válido y adjuntar al menos una fotografía.") }
             return
         }
 

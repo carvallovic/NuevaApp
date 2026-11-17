@@ -22,5 +22,8 @@ data class Medicion(
     val fecha: String,
 
     @ColumnInfo(name = "observaciones")
-    val observaciones: String = ""
+    val observaciones: String = "",
+
+    @ColumnInfo(name = "foto_uri")
+    val fotoUri: String = ""
 )
