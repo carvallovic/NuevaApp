@@ -22,6 +22,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "NuevaApp"
+rootProject.name = "Induztek"
 include(":app")
  //VC
