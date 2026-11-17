@@ -38,6 +38,7 @@ fun LoginScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .statusBarsPadding()
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -55,7 +56,7 @@ fun LoginScreen(
             color = MaterialTheme.colorScheme.secondary
         )
 
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         // Campo de Correo con Ícono
         OutlinedTextField(
@@ -98,7 +99,7 @@ fun LoginScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         // Botón con estado de carga
         Button(
@@ -117,6 +118,23 @@ fun LoginScreen(
                 )
             } else {
                 Text("Iniciar Sesión", fontSize = MaterialTheme.typography.titleMedium.fontSize)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Tarjeta con cuentas de prueba para cada perfil
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                Text("Perfiles de prueba (Clave: 123456):", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text("• ADMIN: admin@induztek.cl", style = MaterialTheme.typography.bodySmall)
+                Text("• TECNICO: tecnico@induztek.cl", style = MaterialTheme.typography.bodySmall)
+                Text("• CLIENTE: cliente@induztek.cl", style = MaterialTheme.typography.bodySmall)
             }
         }
     }

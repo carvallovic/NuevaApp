@@ -32,6 +32,7 @@ fun HistorialScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .statusBarsPadding()
             .padding(16.dp)
     ) {
         Text(
@@ -146,14 +147,19 @@ fun HistorialItem(
                 }
                 if (medicion.fotoUri.isNotBlank()) {
                     Spacer(modifier = Modifier.height(4.dp))
-                    AsyncImage(
-                        model = Uri.parse(medicion.fotoUri),
-                        contentDescription = "Miniatura foto",
-                        modifier = Modifier
-                            .size(60.dp)
-                            .padding(2.dp),
-                        contentScale = ContentScale.Crop
-                    )
+                    val uris = medicion.fotoUri.split(",").filter { it.isNotBlank() }
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        uris.forEach { uriStr ->
+                            AsyncImage(
+                                model = Uri.parse(uriStr),
+                                contentDescription = "Miniatura foto",
+                                modifier = Modifier
+                                    .size(60.dp)
+                                    .padding(2.dp),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+                    }
                 }
             }
 

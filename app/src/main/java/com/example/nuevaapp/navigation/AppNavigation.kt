@@ -1,6 +1,8 @@
 package com.example.nuevaapp.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
@@ -19,6 +21,7 @@ import com.example.nuevaapp.ui.screens.HistorialScreen
 import com.example.nuevaapp.ui.screens.LoginScreen
 import com.example.nuevaapp.ui.screens.MedicionScreen
 import com.example.nuevaapp.ui.screens.MenuModulosScreen
+import com.example.nuevaapp.viewmodel.AuthViewModel
 import com.example.nuevaapp.viewmodel.EquipoViewModel
 import com.example.nuevaapp.viewmodel.HistorialViewModel
 import com.example.nuevaapp.viewmodel.MedicionViewModel
@@ -70,6 +73,7 @@ fun AppNavigation() {
     val equipoViewModel: EquipoViewModel = viewModel(factory = factory)
     val medicionViewModel: MedicionViewModel = viewModel(factory = factory)
     val historialViewModel: HistorialViewModel = viewModel(factory = factory)
+    val authViewModel: AuthViewModel = viewModel()
 
     NavHost(
         navController = navController,
@@ -78,6 +82,7 @@ fun AppNavigation() {
         // Pantalla de Login
         composable(Rutas.LOGIN) {
             LoginScreen(
+                viewModel = authViewModel,
                 onLoginSuccess = {
                     navController.navigate(Rutas.MENU) {
                         popUpTo(Rutas.LOGIN) { inclusive = true }
@@ -88,11 +93,14 @@ fun AppNavigation() {
 
         // Menú de Módulos
         composable(Rutas.MENU) {
+            val userRole by authViewModel.currentUserRole.collectAsState()
             MenuModulosScreen(
+                userRole = userRole,
                 onNavegarAEquipos = { navController.navigate(Rutas.EQUIPOS) },
                 onNavegarAMediciones = { navController.navigate(Rutas.MEDICIONES) },
                 onNavegarAHistorial = { navController.navigate(Rutas.HISTORIAL) },
                 onCerrarSesion = {
+                    authViewModel.cerrarSesion()
                     navController.navigate(Rutas.LOGIN) {
                         popUpTo(Rutas.MENU) { inclusive = true }
                     }

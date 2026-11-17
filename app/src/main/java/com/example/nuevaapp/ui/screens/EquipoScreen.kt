@@ -5,16 +5,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.nuevaapp.model.Equipo
 import com.example.nuevaapp.viewmodel.EquipoViewModel
 
+// @Composable indica que esta función renderiza elementos visuales en la interfaz de usuario.
 @Composable
 fun EquipoScreen(viewModel: EquipoViewModel) {
+    // CollectAsStateWithLifecycle o collectAsState observa los cambios de estado en tiempo real.
     val state by viewModel.uiState.collectAsState()
 
     var nombre by remember { mutableStateOf("") }
@@ -22,15 +22,15 @@ fun EquipoScreen(viewModel: EquipoViewModel) {
     var ubicacion by remember { mutableStateOf("") }
     var estado by remember { mutableStateOf("Operativo") }
     var equipoEnEdicion by remember { mutableStateOf<Equipo?>(null) }
-    var equipoAEliminar by remember { mutableStateOf<Equipo?>(null) }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .statusBarsPadding()
             .padding(16.dp)
     ) {
         Text(
-            text = if (equipoEnEdicion == null) "Registro de Equipos (SQLite)" else "Editando Equipo",
+            text = if (equipoEnEdicion == null) "Registro de Equipos" else "Editando Equipo",
             style = MaterialTheme.typography.headlineSmall
         )
 
@@ -127,35 +127,11 @@ fun EquipoScreen(viewModel: EquipoViewModel) {
                             ubicacion = it.ubicacion
                             estado = it.estado
                         },
-                        onDelete = { equipoAEliminar = it }
+                        onDelete = { viewModel.borrarEquipo(it) }
                     )
                 }
             }
         }
-    }
-
-    // Modal de confirmación colocado DENTRO de EquipoScreen
-    equipoAEliminar?.let { equipo ->
-        AlertDialog(
-            onDismissRequest = { equipoAEliminar = null },
-            title = { Text("Confirmar eliminación") },
-            text = { Text("¿Estás seguro de que deseas eliminar el equipo \"${equipo.nombre}\"? Esta acción no se puede deshacer.") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.borrarEquipo(equipo)
-                        equipoAEliminar = null
-                    }
-                ) {
-                    Text("Eliminar", color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { equipoAEliminar = null }) {
-                    Text("Cancelar")
-                }
-            }
-        )
     }
 }
 

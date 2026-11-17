@@ -6,10 +6,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.nuevaapp.viewmodel.UserRole
 
-// @Composable construirá la pantalla del Menú Principal
 @Composable
 fun MenuModulosScreen(
+    userRole: UserRole?,
     onNavegarAEquipos: () -> Unit,
     onNavegarAMediciones: () -> Unit,
     onNavegarAHistorial: () -> Unit,
@@ -18,6 +19,7 @@ fun MenuModulosScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .statusBarsPadding()
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -26,39 +28,47 @@ fun MenuModulosScreen(
             text = "Menú de Módulos",
             style = MaterialTheme.typography.headlineMedium
         )
+        val roleDesc = when (userRole) {
+            UserRole.ADMIN -> "Perfil: Administrador"
+            UserRole.TECNICO -> "Perfil: Técnico"
+            UserRole.CLIENTE -> "Perfil: Cliente"
+            null -> "Perfil: Usuario"
+        }
         Text(
-            text = "Seleccione una opción para continuar",
+            text = roleDesc,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.primary
         )
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Botón/Opción hacia Módulo de Equipos
-        Button(
-            onClick = onNavegarAEquipos,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-        ) {
-            Text("Gestión de Equipos")
+        // ADMIN: Gestión de Equipos
+        if (userRole == UserRole.ADMIN) {
+            Button(
+                onClick = onNavegarAEquipos,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+            ) {
+                Text("Gestión de Equipos")
+            }
+            Spacer(modifier = Modifier.height(16.dp))
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Botón/Opción hacia Módulo de Mediciones
-        Button(
-            onClick = onNavegarAMediciones,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-        ) {
-            Text("Registro de Mediciones")
+        // ADMIN y TECNICO: Registro de Mediciones
+        if (userRole == UserRole.ADMIN || userRole == UserRole.TECNICO) {
+            Button(
+                onClick = onNavegarAMediciones,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+            ) {
+                Text("Registro de Mediciones")
+            }
+            Spacer(modifier = Modifier.height(16.dp))
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Botón/Opción hacia Historial
+        // TODOS (ADMIN, TECNICO, CLIENTE): Historial de Mediciones
         OutlinedButton(
             onClick = onNavegarAHistorial,
             modifier = Modifier
