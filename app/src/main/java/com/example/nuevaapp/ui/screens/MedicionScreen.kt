@@ -37,6 +37,9 @@ import com.example.nuevaapp.model.Medicion
 import com.example.nuevaapp.viewmodel.EquipoViewModel
 import com.example.nuevaapp.viewmodel.MedicionViewModel
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -259,12 +262,13 @@ fun MedicionScreen(
                     val nombreTecnico = currentUserName.ifBlank { "Técnico General" }
 
                     if (medicionEnEdicion == null) {
+                        val currentDate = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
                         val nuevaMedicion = Medicion(
                             equipoId = eqId,
                             valor = valMed,
                             unidad = unidad,
                             observaciones = observaciones,
-                            fecha = "29/10/2026",
+                            fecha = currentDate,
                             fotoUri = fotoUriString,
                             usuarioId = currentUserId,
                             tecnicoNombre = nombreTecnico

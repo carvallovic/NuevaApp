@@ -11,8 +11,8 @@ import androidx.room.Update
 @Dao
 interface MedicionDao {
 
-    // QUERY: Obtiene todas las mediciones ordenadas de la más reciente a la más antigua
-    @Query("SELECT * FROM tabla_mediciones ORDER BY fecha_registro DESC")
+    // QUERY: Obtiene todas las mediciones ordenadas por ID descendente (más recientes primero)
+    @Query("SELECT * FROM tabla_mediciones ORDER BY id DESC")
     fun obtenerTodasLasMediciones(): Flow<List<Medicion>>
 
     // QUERY DE BÚSQUEDA GENERAL CON JOIN DE EQUIPOS (ADMIN)
@@ -23,12 +23,12 @@ interface MedicionDao {
            OR m.unidad_medida LIKE '%' || :busqueda || '%' 
            OR e.nombre_equipo LIKE '%' || :busqueda || '%' 
            OR e.codigo_equipo LIKE '%' || :busqueda || '%' 
-        ORDER BY m.fecha_registro DESC
+        ORDER BY m.id DESC
     """)
     fun buscarMediciones(busqueda: String): Flow<List<Medicion>>
 
-    // QUERY: Obtiene mediciones por usuario ID
-    @Query("SELECT * FROM tabla_mediciones WHERE usuario_id = :usuarioId ORDER BY fecha_registro DESC")
+    // QUERY: Obtiene mediciones por usuario ID ordenadas por ID descendente
+    @Query("SELECT * FROM tabla_mediciones WHERE usuario_id = :usuarioId ORDER BY id DESC")
     fun obtenerMedicionesPorUsuario(usuarioId: Int): Flow<List<Medicion>>
 
     // QUERY DE BÚSQUEDA POR USUARIO CON JOIN DE EQUIPOS (TECNICO / CLIENTE)
@@ -40,12 +40,12 @@ interface MedicionDao {
                OR m.unidad_medida LIKE '%' || :busqueda || '%' 
                OR e.nombre_equipo LIKE '%' || :busqueda || '%' 
                OR e.codigo_equipo LIKE '%' || :busqueda || '%') 
-        ORDER BY m.fecha_registro DESC
+        ORDER BY m.id DESC
     """)
     fun buscarMedicionesPorUsuario(usuarioId: Int, busqueda: String): Flow<List<Medicion>>
 
     // QUERY: Filtra las mediciones de un equipo en específico por su ID
-    @Query("SELECT * FROM tabla_mediciones WHERE equipo_id = :equipoId ORDER BY fecha_registro DESC")
+    @Query("SELECT * FROM tabla_mediciones WHERE equipo_id = :equipoId ORDER BY id DESC")
     fun obtenerMedicionesPorEquipo(equipoId: Int): Flow<List<Medicion>>
 
     // NUEVO: Obtiene una medición específica por su ID para editarla
