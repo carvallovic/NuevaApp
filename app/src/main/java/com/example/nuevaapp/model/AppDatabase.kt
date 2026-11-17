@@ -38,12 +38,12 @@ abstract class AppDatabase : RoomDatabase() {
                     }
 
                     private fun insertDefaultUsers(db: SupportSQLiteDatabase) {
-                        db.execSQL("INSERT OR IGNORE INTO tabla_usuarios (nombre_usuario, correo, contrasena, perfil) VALUES ('Administrador Induztek', 'admin@induztek.cl', '123456', 'ADMIN')")
-                        db.execSQL("INSERT OR IGNORE INTO tabla_usuarios (nombre_usuario, correo, contrasena, perfil) VALUES ('Administrador Duoc', 'admin@duocuc.cl', '123456', 'ADMIN')")
-                        db.execSQL("INSERT OR IGNORE INTO tabla_usuarios (nombre_website, correo, contrasena, perfil) VALUES ('Técnico Induztek', 'tecnico@induztek.cl', '123456', 'TECNICO')".replace("nombre_website", "nombre_usuario"))
-                        db.execSQL("INSERT OR IGNORE INTO tabla_usuarios (nombre_usuario, correo, contrasena, perfil) VALUES ('Técnico Duoc', 'tec@duocuc.cl', '123456', 'TECNICO')")
-                        db.execSQL("INSERT OR IGNORE INTO tabla_usuarios (nombre_usuario, correo, contrasena, perfil) VALUES ('Cliente Induztek', 'cliente@induztek.cl', '123456', 'CLIENTE')")
-                        db.execSQL("INSERT OR IGNORE INTO tabla_usuarios (nombre_usuario, correo, contrasena, perfil) VALUES ('Cliente Duoc', 'cliente@duocuc.cl', '123456', 'CLIENTE')")
+                        db.execSQL("INSERT INTO tabla_usuarios (nombre_usuario, correo, contrasena, perfil) SELECT 'Administrador Induztek', 'admin@induztek.cl', '123456', 'ADMIN' WHERE NOT EXISTS (SELECT 1 FROM tabla_usuarios WHERE correo = 'admin@induztek.cl')")
+                        db.execSQL("INSERT INTO tabla_usuarios (nombre_usuario, correo, contrasena, perfil) SELECT 'Administrador Duoc', 'admin@duocuc.cl', '123456', 'ADMIN' WHERE NOT EXISTS (SELECT 1 FROM tabla_usuarios WHERE correo = 'admin@duocuc.cl')")
+                        db.execSQL("INSERT INTO tabla_usuarios (nombre_usuario, correo, contrasena, perfil) SELECT 'Técnico Induztek', 'tecnico@induztek.cl', '123456', 'TECNICO' WHERE NOT EXISTS (SELECT 1 FROM tabla_usuarios WHERE correo = 'tecnico@induztek.cl')")
+                        db.execSQL("INSERT INTO tabla_usuarios (nombre_usuario, correo, contrasena, perfil) SELECT 'Técnico Duoc', 'tec@duocuc.cl', '123456', 'TECNICO' WHERE NOT EXISTS (SELECT 1 FROM tabla_usuarios WHERE correo = 'tec@duocuc.cl')")
+                        db.execSQL("INSERT INTO tabla_usuarios (nombre_usuario, correo, contrasena, perfil) SELECT 'Cliente Induztek', 'cliente@induztek.cl', '123456', 'CLIENTE' WHERE NOT EXISTS (SELECT 1 FROM tabla_usuarios WHERE correo = 'cliente@induztek.cl')")
+                        db.execSQL("INSERT INTO tabla_usuarios (nombre_usuario, correo, contrasena, perfil) SELECT 'Cliente Duoc', 'cliente@duocuc.cl', '123456', 'CLIENTE' WHERE NOT EXISTS (SELECT 1 FROM tabla_usuarios WHERE correo = 'cliente@duocuc.cl')")
                     }
                 })
                 .build()

@@ -48,6 +48,10 @@ interface MedicionDao {
     @Query("SELECT * FROM tabla_mediciones WHERE equipo_id = :equipoId ORDER BY id DESC")
     fun obtenerMedicionesPorEquipo(equipoId: Int): Flow<List<Medicion>>
 
+    // QUERY SINCRÓNICA: Obtiene lista de mediciones por equipo para cálculos e histórico
+    @Query("SELECT * FROM tabla_mediciones WHERE equipo_id = :equipoId ORDER BY id DESC")
+    suspend fun obtenerMedicionesPorEquipoSync(equipoId: Int): List<Medicion>
+
     // NUEVO: Obtiene una medición específica por su ID para editarla
     @Query("SELECT * FROM tabla_mediciones WHERE id = :id")
     suspend fun obtenerMedicionPorId(id: Int): Medicion?

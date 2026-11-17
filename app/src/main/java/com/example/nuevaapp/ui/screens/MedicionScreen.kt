@@ -262,7 +262,7 @@ fun MedicionScreen(
                     val nombreTecnico = currentUserName.ifBlank { "Técnico General" }
 
                     if (medicionEnEdicion == null) {
-                        val currentDate = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
+                        val currentDate = SimpleDateFormat("dd/MM/yyyy HH:mm 'hrs.'", Locale.getDefault()).format(Date())
                         val nuevaMedicion = Medicion(
                             equipoId = eqId,
                             valor = valMed,

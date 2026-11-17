@@ -12,6 +12,10 @@ class MedicionRepository(private val medicionDao: MedicionDao) {
         return medicionDao.obtenerMedicionesPorEquipo(equipoId)
     }
 
+    suspend fun obtenerMedicionesPorEquipoSync(equipoId: Int): List<Medicion> {
+        return medicionDao.obtenerMedicionesPorEquipoSync(equipoId)
+    }
+
     fun obtenerMedicionesPorUsuario(usuarioId: Int): Flow<List<Medicion>> {
         return medicionDao.obtenerMedicionesPorUsuario(usuarioId)
     }
