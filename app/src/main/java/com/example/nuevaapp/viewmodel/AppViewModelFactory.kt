@@ -2,12 +2,14 @@ package com.example.nuevaapp.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.example.nuevaapp.repository.AuthRepository
 import com.example.nuevaapp.repository.EquipoRepository
 import com.example.nuevaapp.repository.MedicionRepository
 
 class AppViewModelFactory(
     private val equipoRepository: EquipoRepository,
-    private val medicionRepository: MedicionRepository
+    private val medicionRepository: MedicionRepository,
+    private val authRepository: AuthRepository
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(EquipoViewModel::class.java)) {
@@ -20,7 +22,11 @@ class AppViewModelFactory(
         }
         if (modelClass.isAssignableFrom(HistorialViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return HistorialViewModel(medicionRepository) as T
+            return HistorialViewModel(medicionRepository, equipoRepository) as T
+        }
+        if (modelClass.isAssignableFrom(AuthViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return AuthViewModel(authRepository) as T
         }
         throw IllegalArgumentException("ViewModel Class Desconocida")
     }

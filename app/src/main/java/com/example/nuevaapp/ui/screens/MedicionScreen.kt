@@ -43,6 +43,8 @@ import java.io.File
 fun MedicionScreen(
     viewModel: MedicionViewModel,
     equipoViewModel: EquipoViewModel,
+    currentUserId: Int = 0,
+    currentUserName: String = "",
     registroId: Int = -1,
     onVolver: () -> Unit = {}
 ) {
@@ -110,6 +112,13 @@ fun MedicionScreen(
             text = if (medicionEnEdicion == null) "Registro de Mediciones" else "Editando Medición",
             style = MaterialTheme.typography.headlineSmall
         )
+        if (currentUserName.isNotBlank()) {
+            Text(
+                text = "Técnico: $currentUserName (ID: $currentUserId)",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
 
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -247,6 +256,7 @@ fun MedicionScreen(
                     val eqId = equipoId.toIntOrNull() ?: 0
                     val valMed = valor.toDoubleOrNull() ?: 0.0
                     val fotoUriString = fotosList.joinToString(",")
+                    val nombreTecnico = currentUserName.ifBlank { "Técnico General" }
 
                     if (medicionEnEdicion == null) {
                         val nuevaMedicion = Medicion(
@@ -255,7 +265,9 @@ fun MedicionScreen(
                             unidad = unidad,
                             observaciones = observaciones,
                             fecha = "29/10/2026",
-                            fotoUri = fotoUriString
+                            fotoUri = fotoUriString,
+                            usuarioId = currentUserId,
+                            tecnicoNombre = nombreTecnico
                         )
                         viewModel.agregarMedicion(nuevaMedicion)
                     } else {
@@ -266,7 +278,9 @@ fun MedicionScreen(
                                     valor = valMed,
                                     unidad = unidad,
                                     observaciones = observaciones,
-                                    fotoUri = fotoUriString
+                                    fotoUri = fotoUriString,
+                                    usuarioId = if (med.usuarioId == 0) currentUserId else med.usuarioId,
+                                    tecnicoNombre = med.tecnicoNombre.ifBlank { nombreTecnico }
                                 )
                             )
                         }
@@ -339,6 +353,7 @@ fun MedicionScreen(
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(text = "${medicion.valor} ${medicion.unidad}", style = MaterialTheme.typography.titleMedium)
                                 Text(text = "Equipo: $equipoDisplay | Fecha: ${medicion.fecha}")
+                                Text(text = "Técnico: ${medicion.tecnicoNombre} (ID: ${medicion.usuarioId})", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
                                 if (medicion.observaciones.isNotBlank()) {
                                     Text(text = "Obs: ${medicion.observaciones}", style = MaterialTheme.typography.bodySmall)
                                 }

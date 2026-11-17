@@ -3,6 +3,7 @@ package com.example.nuevaapp.viewmodel
 import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.nuevaapp.repository.AuthRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,12 +25,21 @@ sealed class AuthState {
     data class Error(val message: String) : AuthState() // Error de validación
 }
 
-class AuthViewModel : ViewModel() {
+class AuthViewModel(private val authRepository: AuthRepository) : ViewModel() {
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
 
     private val _currentUserRole = MutableStateFlow<UserRole?>(null)
     val currentUserRole: StateFlow<UserRole?> = _currentUserRole.asStateFlow()
+
+    private val _currentUserId = MutableStateFlow<Int>(0)
+    val currentUserId: StateFlow<Int> = _currentUserId.asStateFlow()
+
+    private val _currentUserName = MutableStateFlow("")
+    val currentUserName: StateFlow<String> = _currentUserName.asStateFlow()
+
+    private val _currentUserEmail = MutableStateFlow("")
+    val currentUserEmail: StateFlow<String> = _currentUserEmail.asStateFlow()
 
     fun iniciarSesion(email: String, clave: String) {
         viewModelScope.launch {
@@ -49,29 +59,34 @@ class AuthViewModel : ViewModel() {
                 return@launch
             }
 
-            // 2. Simulamos el tiempo de consulta a la BD o API (1.0 segundo)
-            delay(1000)
+            // 2. Simulamos el tiempo de consulta a la BD (0.8 segundos)
+            delay(800)
 
-            // 3. Validación de perfiles de prueba
-            val role = when (email.trim().lowercase()) {
-                "admin@induztek.cl", "admin@duocuc.cl" -> UserRole.ADMIN
-                "tecnico@induztek.cl", "tec@duocuc.cl" -> UserRole.TECNICO
-                "cliente@induztek.cl", "cliente@duocuc.cl" -> UserRole.CLIENTE
-                "usuario@duocuc.cl" -> UserRole.ADMIN // Cuenta por defecto anterior
-                else -> null
-            }
+            // 3. Consultar a la base de datos SQLite (tabla_usuarios)
+            val usuario = authRepository.autenticar(email.trim().lowercase(), clave)
 
-            if (role != null && clave == "123456") {
+            if (usuario != null) {
+                val role = when (usuario.perfil.uppercase()) {
+                    "ADMIN" -> UserRole.ADMIN
+                    "TECNICO" -> UserRole.TECNICO
+                    else -> UserRole.CLIENTE
+                }
                 _currentUserRole.value = role
+                _currentUserId.value = usuario.id
+                _currentUserName.value = usuario.nombre
+                _currentUserEmail.value = usuario.correo
                 _authState.value = AuthState.Success(role)
             } else {
-                _authState.value = AuthState.Error("Credenciales incorrectas.\nPruebe con:\n• admin@induztek.cl / 123456\n• tecnico@induztek.cl / 123456\n• cliente@induztek.cl / 123456")
+                _authState.value = AuthState.Error("Correo o contraseña incorrectos en la base de datos")
             }
         }
     }
 
     fun cerrarSesion() {
         _currentUserRole.value = null
+        _currentUserId.value = 0
+        _currentUserName.value = ""
+        _currentUserEmail.value = ""
         _authState.value = AuthState.Idle
     }
 

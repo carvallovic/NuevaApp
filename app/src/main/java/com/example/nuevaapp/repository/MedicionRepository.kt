@@ -12,6 +12,14 @@ class MedicionRepository(private val medicionDao: MedicionDao) {
         return medicionDao.obtenerMedicionesPorEquipo(equipoId)
     }
 
+    fun obtenerMedicionesPorUsuario(usuarioId: Int): Flow<List<Medicion>> {
+        return medicionDao.obtenerMedicionesPorUsuario(usuarioId)
+    }
+
+    fun buscarMedicionesPorUsuario(usuarioId: Int, busqueda: String): Flow<List<Medicion>> {
+        return medicionDao.buscarMedicionesPorUsuario(usuarioId, busqueda)
+    }
+
     suspend fun insertarMedicion(medicion: Medicion) {
         medicionDao.insertarMedicion(medicion)
     }

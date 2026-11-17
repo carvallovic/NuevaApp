@@ -25,5 +25,11 @@ data class Medicion(
     val observaciones: String = "",
 
     @ColumnInfo(name = "foto_uri")
-    val fotoUri: String = ""
+    val fotoUri: String = "",
+
+    @ColumnInfo(name = "usuario_id")
+    val usuarioId: Int = 0,
+
+    @ColumnInfo(name = "tecnico_nombre")
+    val tecnicoNombre: String = "Técnico General"
 )

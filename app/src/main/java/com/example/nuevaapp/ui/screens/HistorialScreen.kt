@@ -15,8 +15,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.example.nuevaapp.model.Equipo
 import com.example.nuevaapp.model.Medicion
 import com.example.nuevaapp.viewmodel.HistorialViewModel
 
@@ -45,7 +47,7 @@ fun HistorialScreen(
         OutlinedTextField(
             value = state.textoBusqueda,
             onValueChange = { viewModel.onBusquedaCambiada(it) },
-            label = { Text("Buscar en historial...") },
+            label = { Text("Buscar por obs, unidad o nombre/TAG de equipo...") },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Buscar") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true
@@ -73,6 +75,7 @@ fun HistorialScreen(
                 items(state.mediciones, key = { it.id }) { medicion ->
                     HistorialItem(
                         medicion = medicion,
+                        equipos = state.equipos,
                         onDelete = { medicionAEliminar = medicion },
                         onEdit = { onEditarRegistro(medicion.id) }
                     )
@@ -111,9 +114,14 @@ fun HistorialScreen(
 @Composable
 fun HistorialItem(
     medicion: Medicion,
+    equipos: List<Equipo>,
     onDelete: (Medicion) -> Unit,
     onEdit: () -> Unit
 ) {
+    val eq = equipos.find { it.id == medicion.equipoId }
+    val equipoNombre = eq?.nombre ?: "ID: ${medicion.equipoId}"
+    val equipoCodigo = eq?.codigo?.let { " (TAG: $it)" } ?: ""
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
@@ -131,8 +139,14 @@ fun HistorialItem(
                     style = MaterialTheme.typography.titleLarge
                 )
                 Text(
-                    text = "Equipo ID: ${medicion.equipoId}",
-                    style = MaterialTheme.typography.bodyMedium
+                    text = "Equipo: $equipoNombre$equipoCodigo",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Técnico: ${medicion.tecnicoNombre} (ID: ${medicion.usuarioId})",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary
                 )
                 Text(
                     text = "Fecha: ${medicion.fecha}",

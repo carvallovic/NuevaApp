@@ -15,9 +15,34 @@ interface MedicionDao {
     @Query("SELECT * FROM tabla_mediciones ORDER BY fecha_registro DESC")
     fun obtenerTodasLasMediciones(): Flow<List<Medicion>>
 
-    // QUERY DE BÚSQUEDA: Filtra registros por observaciones o unidad (Necesario para el Historial)
-    @Query("SELECT * FROM tabla_mediciones WHERE observaciones LIKE '%' || :busqueda || '%' OR unidad_medida LIKE '%' || :busqueda || '%' ORDER BY fecha_registro DESC")
+    // QUERY DE BÚSQUEDA GENERAL CON JOIN DE EQUIPOS (ADMIN)
+    @Query("""
+        SELECT DISTINCT m.* FROM tabla_mediciones m 
+        LEFT JOIN tabla_equipos e ON m.equipo_id = e.id 
+        WHERE m.observaciones LIKE '%' || :busqueda || '%' 
+           OR m.unidad_medida LIKE '%' || :busqueda || '%' 
+           OR e.nombre_equipo LIKE '%' || :busqueda || '%' 
+           OR e.codigo_equipo LIKE '%' || :busqueda || '%' 
+        ORDER BY m.fecha_registro DESC
+    """)
     fun buscarMediciones(busqueda: String): Flow<List<Medicion>>
+
+    // QUERY: Obtiene mediciones por usuario ID
+    @Query("SELECT * FROM tabla_mediciones WHERE usuario_id = :usuarioId ORDER BY fecha_registro DESC")
+    fun obtenerMedicionesPorUsuario(usuarioId: Int): Flow<List<Medicion>>
+
+    // QUERY DE BÚSQUEDA POR USUARIO CON JOIN DE EQUIPOS (TECNICO / CLIENTE)
+    @Query("""
+        SELECT DISTINCT m.* FROM tabla_mediciones m 
+        LEFT JOIN tabla_equipos e ON m.equipo_id = e.id 
+        WHERE m.usuario_id = :usuarioId 
+          AND (m.observaciones LIKE '%' || :busqueda || '%' 
+               OR m.unidad_medida LIKE '%' || :busqueda || '%' 
+               OR e.nombre_equipo LIKE '%' || :busqueda || '%' 
+               OR e.codigo_equipo LIKE '%' || :busqueda || '%') 
+        ORDER BY m.fecha_registro DESC
+    """)
+    fun buscarMedicionesPorUsuario(usuarioId: Int, busqueda: String): Flow<List<Medicion>>
 
     // QUERY: Filtra las mediciones de un equipo en específico por su ID
     @Query("SELECT * FROM tabla_mediciones WHERE equipo_id = :equipoId ORDER BY fecha_registro DESC")

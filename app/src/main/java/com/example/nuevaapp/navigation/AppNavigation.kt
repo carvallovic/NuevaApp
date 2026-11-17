@@ -1,12 +1,11 @@
 package com.example.nuevaapp.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -14,6 +13,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.nuevaapp.model.AppDatabase
+import com.example.nuevaapp.repository.AuthRepository
 import com.example.nuevaapp.repository.EquipoRepository
 import com.example.nuevaapp.repository.MedicionRepository
 import com.example.nuevaapp.ui.screens.EquipoScreen
@@ -21,6 +21,7 @@ import com.example.nuevaapp.ui.screens.HistorialScreen
 import com.example.nuevaapp.ui.screens.LoginScreen
 import com.example.nuevaapp.ui.screens.MedicionScreen
 import com.example.nuevaapp.ui.screens.MenuModulosScreen
+import com.example.nuevaapp.viewmodel.AppViewModelFactory
 import com.example.nuevaapp.viewmodel.AuthViewModel
 import com.example.nuevaapp.viewmodel.EquipoViewModel
 import com.example.nuevaapp.viewmodel.HistorialViewModel
@@ -35,28 +36,6 @@ object Rutas {
     const val HISTORIAL = "historial"
 }
 
-// Fábrica para instanciar los ViewModels con sus repositorios
-class AppViewModelFactory(
-    private val equipoRepository: EquipoRepository,
-    private val medicionRepository: MedicionRepository
-) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(EquipoViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return EquipoViewModel(equipoRepository) as T
-        }
-        if (modelClass.isAssignableFrom(MedicionViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return MedicionViewModel(medicionRepository) as T
-        }
-        if (modelClass.isAssignableFrom(HistorialViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return HistorialViewModel(medicionRepository) as T
-        }
-        throw IllegalArgumentException("ViewModel Class Desconocida")
-    }
-}
-
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
@@ -66,14 +45,15 @@ fun AppNavigation() {
     val database = remember { AppDatabase.getDatabase(context) }
     val equipoRepository = remember { EquipoRepository(database.equipoDao()) }
     val medicionRepository = remember { MedicionRepository(database.medicionDao()) }
+    val authRepository = remember { AuthRepository(database.usuarioDao()) }
 
     // Instanciación correcta mediante la fábrica (ViewModelProvider.Factory)
-    val factory = remember { AppViewModelFactory(equipoRepository, medicionRepository) }
+    val factory = remember { AppViewModelFactory(equipoRepository, medicionRepository, authRepository) }
 
     val equipoViewModel: EquipoViewModel = viewModel(factory = factory)
     val medicionViewModel: MedicionViewModel = viewModel(factory = factory)
     val historialViewModel: HistorialViewModel = viewModel(factory = factory)
-    val authViewModel: AuthViewModel = viewModel()
+    val authViewModel: AuthViewModel = viewModel(factory = factory)
 
     NavHost(
         navController = navController,
@@ -122,10 +102,19 @@ fun AppNavigation() {
             })
         ) { backStackEntry ->
             val registroId = backStackEntry.arguments?.getInt("id") ?: -1
+            val currentUserId by authViewModel.currentUserId.collectAsState()
+            val currentUserName by authViewModel.currentUserName.collectAsState()
+            val userRole by authViewModel.currentUserRole.collectAsState()
+
+            LaunchedEffect(currentUserId, userRole) {
+                medicionViewModel.setUserContext(currentUserId, userRole)
+            }
 
             MedicionScreen(
                 viewModel = medicionViewModel,
                 equipoViewModel = equipoViewModel,
+                currentUserId = currentUserId,
+                currentUserName = currentUserName,
                 registroId = registroId,
                 onVolver = { navController.popBackStack() }
             )
@@ -133,6 +122,13 @@ fun AppNavigation() {
 
         // Módulo de Historial
         composable(Rutas.HISTORIAL) {
+            val currentUserId by authViewModel.currentUserId.collectAsState()
+            val userRole by authViewModel.currentUserRole.collectAsState()
+
+            LaunchedEffect(currentUserId, userRole) {
+                historialViewModel.setUserContext(currentUserId, userRole)
+            }
+
             HistorialScreen(
                 viewModel = historialViewModel,
                 onEditarRegistro = { id ->

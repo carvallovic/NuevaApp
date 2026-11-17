@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.nuevaapp.model.Medicion
 import com.example.nuevaapp.repository.MedicionRepository
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -18,16 +19,36 @@ class MedicionViewModel(private val repository: MedicionRepository) : ViewModel(
     private val _uiState = MutableStateFlow(MedicionUiState(isLoading = true))
     val uiState: StateFlow<MedicionUiState> = _uiState.asStateFlow()
 
+    private val _currentUserId = MutableStateFlow(-1)
+    private val _userRole = MutableStateFlow<UserRole?>(null)
+
     init {
         cargarMediciones()
     }
 
+    fun setUserContext(userId: Int, role: UserRole?) {
+        _currentUserId.value = userId
+        _userRole.value = role
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun cargarMediciones() {
         viewModelScope.launch {
-            repository.todasLasMediciones.collect { lista ->
+            combine(_currentUserId, _userRole) { userId, role ->
+                Pair(userId, role)
+            }
+            .filter { (userId, role) -> role != null && (role == UserRole.ADMIN || userId > 0) }
+            .flatMapLatest { (userId, role) ->
+                if (role == UserRole.ADMIN) {
+                    repository.todasLasMediciones
+                } else {
+                    repository.obtenerMedicionesPorUsuario(userId)
+                }
+            }
+            .collect { listaFiltrada ->
                 _uiState.update {
                     it.copy(
-                        mediciones = lista,
+                        mediciones = listaFiltrada,
                         isLoading = false,
                         error = null
                     )
