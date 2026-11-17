@@ -17,6 +17,7 @@ import com.example.nuevaapp.repository.AuthRepository
 import com.example.nuevaapp.repository.EquipoRepository
 import com.example.nuevaapp.repository.MedicionRepository
 import com.example.nuevaapp.ui.screens.EquipoScreen
+import com.example.nuevaapp.ui.screens.GestionUsuariosScreen
 import com.example.nuevaapp.ui.screens.HistorialScreen
 import com.example.nuevaapp.ui.screens.LoginScreen
 import com.example.nuevaapp.ui.screens.MedicionScreen
@@ -26,11 +27,13 @@ import com.example.nuevaapp.viewmodel.AuthViewModel
 import com.example.nuevaapp.viewmodel.EquipoViewModel
 import com.example.nuevaapp.viewmodel.HistorialViewModel
 import com.example.nuevaapp.viewmodel.MedicionViewModel
+import com.example.nuevaapp.viewmodel.UsuarioViewModel
 
 // Rutas de navegación estáticas
 object Rutas {
     const val LOGIN = "login"
     const val MENU = "menu"
+    const val USUARIOS = "usuarios"
     const val EQUIPOS = "equipos"
     const val MEDICIONES = "mediciones"
     const val HISTORIAL = "historial"
@@ -53,6 +56,7 @@ fun AppNavigation() {
     val equipoViewModel: EquipoViewModel = viewModel(factory = factory)
     val medicionViewModel: MedicionViewModel = viewModel(factory = factory)
     val historialViewModel: HistorialViewModel = viewModel(factory = factory)
+    val usuarioViewModel: UsuarioViewModel = viewModel(factory = factory)
     val authViewModel: AuthViewModel = viewModel(factory = factory)
 
     NavHost(
@@ -76,6 +80,7 @@ fun AppNavigation() {
             val userRole by authViewModel.currentUserRole.collectAsState()
             MenuModulosScreen(
                 userRole = userRole,
+                onNavegarAUsuarios = { navController.navigate(Rutas.USUARIOS) },
                 onNavegarAEquipos = { navController.navigate(Rutas.EQUIPOS) },
                 onNavegarAMediciones = { navController.navigate(Rutas.MEDICIONES) },
                 onNavegarAHistorial = { navController.navigate(Rutas.HISTORIAL) },
@@ -85,6 +90,14 @@ fun AppNavigation() {
                         popUpTo(Rutas.MENU) { inclusive = true }
                     }
                 }
+            )
+        }
+
+        // Módulo de Gestión de Usuarios (ADMIN)
+        composable(Rutas.USUARIOS) {
+            GestionUsuariosScreen(
+                viewModel = usuarioViewModel,
+                onVolver = { navController.popBackStack() }
             )
         }
 

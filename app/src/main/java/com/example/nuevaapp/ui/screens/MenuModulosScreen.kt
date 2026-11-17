@@ -11,6 +11,7 @@ import com.example.nuevaapp.viewmodel.UserRole
 @Composable
 fun MenuModulosScreen(
     userRole: UserRole?,
+    onNavegarAUsuarios: () -> Unit,
     onNavegarAEquipos: () -> Unit,
     onNavegarAMediciones: () -> Unit,
     onNavegarAHistorial: () -> Unit,
@@ -29,9 +30,9 @@ fun MenuModulosScreen(
             style = MaterialTheme.typography.headlineMedium
         )
         val roleDesc = when (userRole) {
-            UserRole.ADMIN -> "Perfil: Administrador"
-            UserRole.TECNICO -> "Perfil: Técnico"
-            UserRole.CLIENTE -> "Perfil: Cliente"
+            UserRole.ADMIN -> "Perfil: Administrador (ADMIN)"
+            UserRole.TECNICO -> "Perfil: Técnico (TECNICO)"
+            UserRole.CLIENTE -> "Perfil: Cliente (CLIENTE)"
             null -> "Perfil: Usuario"
         }
         Text(
@@ -41,6 +42,19 @@ fun MenuModulosScreen(
         )
 
         Spacer(modifier = Modifier.height(32.dp))
+
+        // ADMIN: Gestión de Usuarios (Primer módulo arriba)
+        if (userRole == UserRole.ADMIN) {
+            Button(
+                onClick = onNavegarAUsuarios,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+            ) {
+                Text("Gestión de Usuarios")
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         // ADMIN: Gestión de Equipos
         if (userRole == UserRole.ADMIN) {

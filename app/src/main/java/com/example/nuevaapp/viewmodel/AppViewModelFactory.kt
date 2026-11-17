@@ -28,6 +28,10 @@ class AppViewModelFactory(
             @Suppress("UNCHECKED_CAST")
             return AuthViewModel(authRepository) as T
         }
+        if (modelClass.isAssignableFrom(UsuarioViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return UsuarioViewModel(authRepository) as T
+        }
         throw IllegalArgumentException("ViewModel Class Desconocida")
     }
 }
