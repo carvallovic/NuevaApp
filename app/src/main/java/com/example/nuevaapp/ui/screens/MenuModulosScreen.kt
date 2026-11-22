@@ -56,18 +56,16 @@ fun MenuModulosScreen(
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // ADMIN: Gestión de Equipos
-        if (userRole == UserRole.ADMIN) {
-            Button(
-                onClick = onNavegarAEquipos,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-            ) {
-                Text("Gestión de Equipos")
-            }
-            Spacer(modifier = Modifier.height(16.dp))
+        // TODOS LOS PERFILES (ADMIN, TECNICO, CLIENTE): Gestión de Equipos
+        Button(
+            onClick = onNavegarAEquipos,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+        ) {
+            Text("Gestión de Equipos")
         }
+        Spacer(modifier = Modifier.height(16.dp))
 
         // ADMIN y TECNICO: Registro de Mediciones
         if (userRole == UserRole.ADMIN || userRole == UserRole.TECNICO) {

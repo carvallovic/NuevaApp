@@ -46,7 +46,7 @@ fun AppNavigation() {
 
     // Inicialización de la base de datos SQLite y los Repositorios
     val database = remember { AppDatabase.getDatabase(context) }
-    val equipoRepository = remember { EquipoRepository(database.equipoDao()) }
+    val equipoRepository = remember { EquipoRepository(database.equipoDao(), database.usuarioDao()) }
     val medicionRepository = remember { MedicionRepository(database.medicionDao()) }
     val authRepository = remember { AuthRepository(database.usuarioDao()) }
 
@@ -101,9 +101,22 @@ fun AppNavigation() {
             )
         }
 
-        // Módulo de Equipos
+        // Módulo de Equipos (Disponible para todos los perfiles)
         composable(Rutas.EQUIPOS) {
-            EquipoScreen(viewModel = equipoViewModel)
+            val currentUserId by authViewModel.currentUserId.collectAsState()
+            val currentUserName by authViewModel.currentUserName.collectAsState()
+            val userRole by authViewModel.currentUserRole.collectAsState()
+
+            LaunchedEffect(currentUserId, userRole) {
+                equipoViewModel.setUserContext(currentUserId, userRole)
+            }
+
+            EquipoScreen(
+                viewModel = equipoViewModel,
+                currentUserId = currentUserId,
+                currentUserName = currentUserName,
+                userRole = userRole
+            )
         }
 
         // Módulo de Mediciones (Acepta ID opcional para edición)
@@ -120,6 +133,7 @@ fun AppNavigation() {
             val userRole by authViewModel.currentUserRole.collectAsState()
 
             LaunchedEffect(currentUserId, userRole) {
+                equipoViewModel.setUserContext(currentUserId, userRole)
                 medicionViewModel.setUserContext(currentUserId, userRole)
             }
 
@@ -128,6 +142,7 @@ fun AppNavigation() {
                 equipoViewModel = equipoViewModel,
                 currentUserId = currentUserId,
                 currentUserName = currentUserName,
+                userRole = userRole,
                 registroId = registroId,
                 onVolver = { navController.popBackStack() }
             )

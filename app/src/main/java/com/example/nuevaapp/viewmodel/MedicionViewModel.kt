@@ -39,10 +39,11 @@ class MedicionViewModel(private val repository: MedicionRepository) : ViewModel(
             }
             .filter { (userId, role) -> role != null && (role == UserRole.ADMIN || userId > 0) }
             .flatMapLatest { (userId, role) ->
-                if (role == UserRole.ADMIN) {
-                    repository.todasLasMediciones
-                } else {
-                    repository.obtenerMedicionesPorUsuario(userId)
+                when (role) {
+                    UserRole.ADMIN -> repository.todasLasMediciones
+                    UserRole.TECNICO -> repository.obtenerMedicionesPorTecnico(userId)
+                    UserRole.CLIENTE -> repository.obtenerMedicionesPorCliente(userId)
+                    null -> flowOf(emptyList())
                 }
             }
             .collect { listaFiltrada ->

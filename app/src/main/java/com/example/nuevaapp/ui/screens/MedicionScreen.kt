@@ -12,9 +12,11 @@ import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -36,6 +38,7 @@ import coil.compose.AsyncImage
 import com.example.nuevaapp.model.Medicion
 import com.example.nuevaapp.viewmodel.EquipoViewModel
 import com.example.nuevaapp.viewmodel.MedicionViewModel
+import com.example.nuevaapp.viewmodel.UserRole
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -48,21 +51,27 @@ fun MedicionScreen(
     equipoViewModel: EquipoViewModel,
     currentUserId: Int = 0,
     currentUserName: String = "",
+    userRole: UserRole? = null,
     registroId: Int = -1,
     onVolver: () -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsState()
     val equipoState by equipoViewModel.uiState.collectAsState()
     val equipos = equipoState.equipos
+    val clientes = equipoState.clientes
+
+    var selectedClienteId by remember { mutableStateOf(0) }
+    var selectedClienteText by remember { mutableStateOf("") }
+    var expandedCliente by remember { mutableStateOf(false) }
 
     var equipoId by remember { mutableStateOf("") }
+    var selectedEquipoText by remember { mutableStateOf("") }
+    var expandedEquipo by remember { mutableStateOf(false) }
+
     var valor by remember { mutableStateOf("") }
     var unidad by remember { mutableStateOf("") }
     var observaciones by remember { mutableStateOf("") }
     var fotosList by remember { mutableStateOf<List<String>>(emptyList()) }
-
-    var expanded by remember { mutableStateOf(false) }
-    var selectedEquipoText by remember { mutableStateOf("") }
 
     var medicionEnEdicion by remember { mutableStateOf<Medicion?>(null) }
     var medicionAEliminar by remember { mutableStateOf<Medicion?>(null) }
@@ -77,26 +86,59 @@ fun MedicionScreen(
         }
     }
 
-    // Actualizar texto seleccionado cuando cambia equipoId o equipos
+    // Si el usuario logueado es CLIENTE, fijar automáticamente su ID y Nombre
+    LaunchedEffect(userRole, currentUserId, currentUserName) {
+        if (userRole == UserRole.CLIENTE) {
+            selectedClienteId = currentUserId
+            selectedClienteText = "$currentUserId - $currentUserName"
+        }
+    }
+
+    // Filtrar equipos según el cliente seleccionado
+    val equiposDelCliente = remember(selectedClienteId, equipos) {
+        if (selectedClienteId > 0) {
+            equipos.filter { it.clienteId == selectedClienteId }
+        } else {
+            emptyList()
+        }
+    }
+
+    // Actualizar texto de equipo seleccionado cuando cambia equipoId
     LaunchedEffect(equipoId, equipos) {
         if (equipoId.isNotBlank()) {
             val idInt = equipoId.toIntOrNull()
             val eq = equipos.find { it.id == idInt }
-            selectedEquipoText = if (eq != null) "${eq.id} - ${eq.nombre}" else equipoId
+            if (eq != null) {
+                selectedEquipoText = "${eq.id} - ${eq.nombre}"
+                if (userRole != UserRole.CLIENTE && selectedClienteId <= 0) {
+                    selectedClienteId = eq.clienteId
+                    selectedClienteText = if (eq.clienteId > 0) "${eq.clienteId} - ${eq.clienteNombre}" else ""
+                }
+            } else {
+                selectedEquipoText = equipoId
+            }
         } else {
             selectedEquipoText = ""
         }
     }
 
     // Cargar medición cuando se pasa un registroId desde la navegación
-    LaunchedEffect(registroId, state.mediciones, equipos) {
+    LaunchedEffect(registroId, state.mediciones, equipos, clientes) {
         if (registroId != -1) {
             val encontrada = state.mediciones.find { it.id == registroId }
             if (encontrada != null) {
                 medicionEnEdicion = encontrada
                 equipoId = encontrada.equipoId.toString()
                 val eq = equipos.find { it.id == encontrada.equipoId }
-                selectedEquipoText = if (eq != null) "${eq.id} - ${eq.nombre}" else encontrada.equipoId.toString()
+                if (eq != null) {
+                    selectedEquipoText = "${eq.id} - ${eq.nombre}"
+                    selectedClienteId = eq.clienteId
+                    val cli = clientes.find { it.id == eq.clienteId }
+                    val nombreClienteDisplay = cli?.nombre ?: eq.clienteNombre.ifBlank { "Cliente ${eq.clienteId}" }
+                    selectedClienteText = if (eq.clienteId > 0) "${eq.clienteId} - $nombreClienteDisplay" else ""
+                } else {
+                    selectedEquipoText = encontrada.equipoId.toString()
+                }
                 valor = encontrada.valor.toString()
                 unidad = encontrada.unidad
                 observaciones = encontrada.observaciones
@@ -125,40 +167,100 @@ fun MedicionScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Lista desplegable para seleccionar el equipo (ID - Nombre)
+        // 1. PRIMER CAMPO: Lista Desplegable de Clientes (o solo lectura para CLIENTE)
+        if (userRole == UserRole.CLIENTE) {
+            OutlinedTextField(
+                value = "$currentUserId - $currentUserName",
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Cliente (Asignado)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+        } else {
+            ExposedDropdownMenuBox(
+                expanded = expandedCliente,
+                onExpandedChange = { expandedCliente = !expandedCliente },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                OutlinedTextField(
+                    value = selectedClienteText,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("1. Seleccionar Cliente (ID - Nombre)") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCliente) },
+                    modifier = Modifier
+                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                        .fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                    expanded = expandedCliente,
+                    onDismissRequest = { expandedCliente = false }
+                ) {
+                    if (clientes.isEmpty()) {
+                        DropdownMenuItem(
+                            text = { Text("No hay usuarios con perfil CLIENTE registrados") },
+                            onClick = { expandedCliente = false }
+                        )
+                    } else {
+                        clientes.forEach { cliente ->
+                            val textDisplay = "${cliente.id} - ${cliente.nombre}"
+                            DropdownMenuItem(
+                                text = { Text(textDisplay) },
+                                onClick = {
+                                    selectedClienteId = cliente.id
+                                    selectedClienteText = textDisplay
+                                    equipoId = ""
+                                    selectedEquipoText = ""
+                                    expandedCliente = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // 2. SEGUNDO CAMPO: Lista Desplegable de Equipos (Filtrados por el cliente seleccionado)
         ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { expanded = !expanded },
+            expanded = expandedEquipo,
+            onExpandedChange = { expandedEquipo = !expandedEquipo },
             modifier = Modifier.fillMaxWidth()
         ) {
             OutlinedTextField(
                 value = selectedEquipoText,
                 onValueChange = {},
                 readOnly = true,
-                label = { Text("Equipo (ID - Nombre)") },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                label = { Text(if (selectedClienteId <= 0) "2. Seleccione un cliente primero" else "2. Seleccionar Equipo (ID - Nombre)") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedEquipo) },
                 modifier = Modifier
                     .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                     .fillMaxWidth()
             )
             ExposedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
+                expanded = expandedEquipo,
+                onDismissRequest = { expandedEquipo = false }
             ) {
-                if (equipos.isEmpty()) {
+                if (selectedClienteId <= 0) {
                     DropdownMenuItem(
-                        text = { Text("No hay equipos registrados") },
-                        onClick = { expanded = false }
+                        text = { Text("Por favor seleccione un cliente primero") },
+                        onClick = { expandedEquipo = false }
+                    )
+                } else if (equiposDelCliente.isEmpty()) {
+                    DropdownMenuItem(
+                        text = { Text("El cliente seleccionado no tiene equipos registrados") },
+                        onClick = { expandedEquipo = false }
                     )
                 } else {
-                    equipos.forEach { equipo ->
+                    equiposDelCliente.forEach { equipo ->
                         val displayText = "${equipo.id} - ${equipo.nombre}"
                         DropdownMenuItem(
                             text = { Text(displayText) },
                             onClick = {
                                 equipoId = equipo.id.toString()
                                 selectedEquipoText = displayText
-                                expanded = false
+                                expandedEquipo = false
                             }
                         )
                     }
@@ -190,7 +292,7 @@ fun MedicionScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         // Sección de Fotografías (Obligatoria al menos 1, hasta 5 con botón +)
-        Text(text = "Fotografías (Obligatoria al menos 1, máx. 5):", style = MaterialTheme.typography.bodyMedium)
+        Text(text = "Fotografías (Obligatoria al menos 1, máx. 4):", style = MaterialTheme.typography.bodyMedium)
         Spacer(modifier = Modifier.height(4.dp))
 
         Row(
@@ -226,8 +328,8 @@ fun MedicionScreen(
                 }
             }
 
-            // Botón '+' si hay menos de 5 fotos
-            if (fotosList.size < 5) {
+            // Botón '+' si hay menos de 4 fotos
+            if (fotosList.size < 4) {
                 OutlinedButton(
                     onClick = {
                         val permissionCheck = ContextCompat.checkSelfPermission(
@@ -298,6 +400,11 @@ fun MedicionScreen(
                         observaciones = ""
                         fotosList = emptyList()
 
+                        if (userRole != UserRole.CLIENTE) {
+                            selectedClienteId = 0
+                            selectedClienteText = ""
+                        }
+
                         if (registroId != -1) {
                             onVolver()
                         }
@@ -318,6 +425,10 @@ fun MedicionScreen(
                         unidad = ""
                         observaciones = ""
                         fotosList = emptyList()
+                        if (userRole != UserRole.CLIENTE) {
+                            selectedClienteId = 0
+                            selectedClienteText = ""
+                        }
                         if (registroId != -1) {
                             onVolver()
                         }
@@ -347,51 +458,66 @@ fun MedicionScreen(
                         modifier = Modifier.fillMaxWidth(),
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
-                        Row(
+                        Column(
                             modifier = Modifier
                                 .padding(12.dp)
-                                .fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                                .fillMaxWidth()
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(text = "${medicion.valor} ${medicion.unidad}", style = MaterialTheme.typography.titleMedium)
-                                Text(text = "Equipo: $equipoDisplay | Fecha: ${medicion.fecha}")
-                                Text(text = "Técnico: ${medicion.tecnicoNombre} (ID: ${medicion.usuarioId})", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
-                                if (medicion.observaciones.isNotBlank()) {
-                                    Text(text = "Obs: ${medicion.observaciones}", style = MaterialTheme.typography.bodySmall)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.Top
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(text = "${medicion.valor} ${medicion.unidad}", style = MaterialTheme.typography.titleMedium)
+                                    Text(text = "Equipo: $equipoDisplay | Fecha: ${medicion.fecha}")
+                                    Text(text = "Técnico: ${medicion.tecnicoNombre} (ID: ${medicion.usuarioId})", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                                    if (medicion.observaciones.isNotBlank()) {
+                                        Text(text = "Obs: ${medicion.observaciones}", style = MaterialTheme.typography.bodySmall)
+                                    }
                                 }
-                                if (medicion.fotoUri.isNotBlank()) {
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    val uris = medicion.fotoUri.split(",").filter { it.isNotBlank() }
-                                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                        uris.forEach { uriStr ->
-                                            AsyncImage(
-                                                model = Uri.parse(uriStr),
-                                                contentDescription = "Miniatura foto",
-                                                modifier = Modifier
-                                                    .size(50.dp)
-                                                    .padding(2.dp),
-                                                contentScale = ContentScale.Crop
-                                            )
+                                if (userRole == UserRole.ADMIN || userRole == UserRole.TECNICO) {
+                                    Row {
+                                        IconButton(onClick = {
+                                            medicionEnEdicion = medicion
+                                            equipoId = medicion.equipoId.toString()
+                                            selectedEquipoText = equipoDisplay
+                                            val eqMatch = equipos.find { it.id == medicion.equipoId }
+                                            if (eqMatch != null && eqMatch.clienteId > 0) {
+                                                selectedClienteId = eqMatch.clienteId
+                                                selectedClienteText = "${eqMatch.clienteId} - ${eqMatch.clienteNombre}"
+                                            }
+                                            valor = medicion.valor.toString()
+                                            unidad = medicion.unidad
+                                            observaciones = medicion.observaciones
+                                            fotosList = medicion.fotoUri.split(",").filter { it.isNotBlank() }
+                                        }) {
+                                            Icon(Icons.Default.Edit, contentDescription = "Editar", tint = MaterialTheme.colorScheme.primary)
+                                        }
+                                        IconButton(onClick = { medicionAEliminar = medicion }) {
+                                            Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = MaterialTheme.colorScheme.error)
                                         }
                                     }
                                 }
                             }
-                            Row {
-                                IconButton(onClick = {
-                                    medicionEnEdicion = medicion
-                                    equipoId = medicion.equipoId.toString()
-                                    selectedEquipoText = equipoDisplay
-                                    valor = medicion.valor.toString()
-                                    unidad = medicion.unidad
-                                    observaciones = medicion.observaciones
-                                    fotosList = medicion.fotoUri.split(",").filter { it.isNotBlank() }
-                                }) {
-                                    Icon(Icons.Default.Edit, contentDescription = "Editar", tint = MaterialTheme.colorScheme.primary)
-                                }
-                                IconButton(onClick = { medicionAEliminar = medicion }) {
-                                    Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = MaterialTheme.colorScheme.error)
+
+                            if (medicion.fotoUri.isNotBlank()) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                val uris = medicion.fotoUri.split(",").filter { it.isNotBlank() }.take(4)
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    uris.forEach { uriStr ->
+                                        AsyncImage(
+                                            model = Uri.parse(uriStr),
+                                            contentDescription = "Miniatura foto",
+                                            modifier = Modifier
+                                                .size(56.dp)
+                                                .padding(2.dp),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                    }
                                 }
                             }
                         }

@@ -17,6 +17,9 @@ interface UsuarioDao {
     @Query("SELECT * FROM tabla_usuarios ORDER BY id ASC")
     fun obtenerTodosLosUsuarios(): Flow<List<Usuario>>
 
+    @Query("SELECT * FROM tabla_usuarios WHERE UPPER(perfil) = 'CLIENTE' ORDER BY id ASC")
+    fun obtenerUsuariosCliente(): Flow<List<Usuario>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertarUsuario(usuario: Usuario)
 

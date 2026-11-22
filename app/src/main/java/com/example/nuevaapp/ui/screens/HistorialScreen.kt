@@ -10,9 +10,11 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.pdf.PdfDocument
 import android.net.Uri
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -42,6 +44,7 @@ import java.io.FileOutputStream
 @Composable
 fun HistorialScreen(
     viewModel: HistorialViewModel,
+    userRole: com.example.nuevaapp.viewmodel.UserRole? = null,
     onEditarRegistro: (Int) -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -88,11 +91,13 @@ fun HistorialScreen(
                 )
             }
         } else {
+            val effectiveRole = userRole ?: state.userRole
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(state.mediciones, key = { it.id }) { medicion ->
                     HistorialItem(
                         medicion = medicion,
                         equipos = state.equipos,
+                        userRole = effectiveRole,
                         onDelete = { medicionAEliminar = medicion },
                         onEdit = { onEditarRegistro(medicion.id) }
                     )
@@ -132,6 +137,7 @@ fun HistorialScreen(
 fun HistorialItem(
     medicion: Medicion,
     equipos: List<Equipo>,
+    userRole: com.example.nuevaapp.viewmodel.UserRole? = null,
     onDelete: (Medicion) -> Unit,
     onEdit: () -> Unit
 ) {
@@ -144,78 +150,93 @@ fun HistorialItem(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
     ) {
-        Row(
+        Column(
             modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .padding(14.dp)
+                .fillMaxWidth()
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "${medicion.valor} ${medicion.unidad}",
-                    style = MaterialTheme.typography.titleLarge
-                )
-                Text(
-                    text = "Equipo: $equipoNombre$equipoCodigo",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "Técnico: ${medicion.tecnicoNombre} (ID: ${medicion.usuarioId})",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = "Fecha: ${medicion.fecha}",
-                    style = MaterialTheme.typography.labelMedium
-                )
-                if (medicion.observaciones.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(4.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Obs: ${medicion.observaciones}",
-                        style = MaterialTheme.typography.bodySmall
+                        text = "${medicion.valor} ${medicion.unidad}",
+                        style = MaterialTheme.typography.titleLarge
                     )
+                    Text(
+                        text = "Equipo: $equipoNombre$equipoCodigo",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Cliente: ${eq?.clienteNombre ?: "N/A"} (ID: ${eq?.clienteId ?: 0})",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "Técnico: ${medicion.tecnicoNombre} (ID: ${medicion.usuarioId})",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "Fecha: ${medicion.fecha}",
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                    if (medicion.observaciones.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Obs: ${medicion.observaciones}",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
                 }
-                if (medicion.fotoUri.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    val uris = medicion.fotoUri.split(",").filter { it.isNotBlank() }
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        uris.forEach { uriStr ->
-                            AsyncImage(
-                                model = Uri.parse(uriStr),
-                                contentDescription = "Miniatura foto",
-                                modifier = Modifier
-                                    .size(60.dp)
-                                    .padding(2.dp),
-                                contentScale = ContentScale.Crop
+
+                Row(horizontalArrangement = Arrangement.End) {
+                    IconButton(onClick = { generarYCompartirPdf(context, medicion, equipoNombre) }) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = "Generar y Compartir PDF",
+                            tint = MaterialTheme.colorScheme.secondary
+                        )
+                    }
+                    if (userRole == com.example.nuevaapp.viewmodel.UserRole.ADMIN || userRole == com.example.nuevaapp.viewmodel.UserRole.TECNICO) {
+                        IconButton(onClick = onEdit) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Editar registro",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        IconButton(onClick = { onDelete(medicion) }) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Eliminar registro",
+                                tint = MaterialTheme.colorScheme.error
                             )
                         }
                     }
                 }
             }
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = { generarYCompartirPdf(context, medicion, equipoNombre) }) {
-                    Icon(
-                        imageVector = Icons.Default.Share,
-                        contentDescription = "Generar y Compartir PDF",
-                        tint = MaterialTheme.colorScheme.secondary
-                    )
-                }
-                IconButton(onClick = onEdit) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = "Editar registro",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-                IconButton(onClick = { onDelete(medicion) }) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Eliminar registro",
-                        tint = MaterialTheme.colorScheme.error
-                    )
+            if (medicion.fotoUri.isNotBlank()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                val uris = medicion.fotoUri.split(",").filter { it.isNotBlank() }.take(4)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    uris.forEach { uriStr ->
+                        AsyncImage(
+                            model = Uri.parse(uriStr),
+                            contentDescription = "Miniatura foto",
+                            modifier = Modifier
+                                .size(56.dp)
+                                .padding(2.dp),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
                 }
             }
         }
@@ -487,15 +508,15 @@ private fun generarYCompartirPdf(context: Context, medicion: Medicion, equipoNom
         val thBg = Paint().apply { color = valueBoxBgColor; isAntiAlias = true }
         canvas2.drawRect(40f, y2 - 15f, 555f, y2 + 12f, thBg)
 
-        val thPaint = Paint().apply { color = Color.rgb(15, 23, 42); textSize = 12f; isFakeBoldText = true; isAntiAlias = true }
+        val thPaint = Paint().apply { color = Color.rgb(15, 23, 42); textSize = 11.5f; isFakeBoldText = true; isAntiAlias = true }
         canvas2.drawText("ID", 50f, y2, thPaint)
-        canvas2.drawText("Fecha", 100f, y2, thPaint)
-        canvas2.drawText("Valor Medido", 220f, y2, thPaint)
-        canvas2.drawText("Técnico", 360f, y2, thPaint)
+        canvas2.drawText("Fecha", 90f, y2, thPaint)
+        canvas2.drawText("Valor Medido", 265f, y2, thPaint)
+        canvas2.drawText("Técnico", 385f, y2, thPaint)
         y2 += 30f
 
-        val rowDark = Paint().apply { color = Color.rgb(20, 25, 35); textSize = 12f; isAntiAlias = true }
-        val rowBold = Paint().apply { color = Color.rgb(20, 25, 35); textSize = 12f; isFakeBoldText = true; isAntiAlias = true }
+        val rowDark = Paint().apply { color = Color.rgb(20, 25, 35); textSize = 11f; isAntiAlias = true }
+        val rowBold = Paint().apply { color = Color.rgb(20, 25, 35); textSize = 11f; isFakeBoldText = true; isAntiAlias = true }
 
         for (item in historialEquipo) {
             if (y2 > 780f) break
@@ -504,9 +525,9 @@ private fun generarYCompartirPdf(context: Context, medicion: Medicion, equipoNom
             canvas2.drawRect(40f, y2 - 12f, 555f, y2 + 14f, rowBg)
 
             canvas2.drawText("#${item.id}", 50f, y2, if (isCurrent) rowBold else rowDark)
-            canvas2.drawText(item.fecha, 100f, y2, rowDark)
-            canvas2.drawText("${item.valor} ${item.unidad}", 220f, y2, rowBold)
-            canvas2.drawText(item.tecnicoNombre.take(30), 360f, y2, rowDark)
+            canvas2.drawText(item.fecha, 90f, y2, rowDark)
+            canvas2.drawText("${item.valor} ${item.unidad}", 265f, y2, rowBold)
+            canvas2.drawText(item.tecnicoNombre.take(25), 385f, y2, rowDark)
             y2 += 30f
         }
 

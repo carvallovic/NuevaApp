@@ -11,7 +11,7 @@ import androidx.room.Update
 @Dao
 interface MedicionDao {
 
-    // QUERY: Obtiene todas las mediciones ordenadas por ID descendente (más recientes primero)
+    // QUERY: Obtiene todas las mediciones ordenadas por ID descendente (ADMIN)
     @Query("SELECT * FROM tabla_mediciones ORDER BY id DESC")
     fun obtenerTodasLasMediciones(): Flow<List<Medicion>>
 
@@ -27,11 +27,11 @@ interface MedicionDao {
     """)
     fun buscarMediciones(busqueda: String): Flow<List<Medicion>>
 
-    // QUERY: Obtiene mediciones por usuario ID ordenadas por ID descendente
+    // QUERY POR TÉCNICO (usuario_id)
     @Query("SELECT * FROM tabla_mediciones WHERE usuario_id = :usuarioId ORDER BY id DESC")
-    fun obtenerMedicionesPorUsuario(usuarioId: Int): Flow<List<Medicion>>
+    fun obtenerMedicionesPorTecnico(usuarioId: Int): Flow<List<Medicion>>
 
-    // QUERY DE BÚSQUEDA POR USUARIO CON JOIN DE EQUIPOS (TECNICO / CLIENTE)
+    // QUERY DE BÚSQUEDA POR TÉCNICO
     @Query("""
         SELECT DISTINCT m.* FROM tabla_mediciones m 
         LEFT JOIN tabla_equipos e ON m.equipo_id = e.id 
@@ -42,7 +42,29 @@ interface MedicionDao {
                OR e.codigo_equipo LIKE '%' || :busqueda || '%') 
         ORDER BY m.id DESC
     """)
-    fun buscarMedicionesPorUsuario(usuarioId: Int, busqueda: String): Flow<List<Medicion>>
+    fun buscarMedicionesPorTecnico(usuarioId: Int, busqueda: String): Flow<List<Medicion>>
+
+    // QUERY POR CLIENTE (e.cliente_id)
+    @Query("""
+        SELECT m.* FROM tabla_mediciones m 
+        INNER JOIN tabla_equipos e ON m.equipo_id = e.id 
+        WHERE e.cliente_id = :clienteId 
+        ORDER BY m.id DESC
+    """)
+    fun obtenerMedicionesPorCliente(clienteId: Int): Flow<List<Medicion>>
+
+    // QUERY DE BÚSQUEDA POR CLIENTE
+    @Query("""
+        SELECT DISTINCT m.* FROM tabla_mediciones m 
+        INNER JOIN tabla_equipos e ON m.equipo_id = e.id 
+        WHERE e.cliente_id = :clienteId 
+          AND (m.observaciones LIKE '%' || :busqueda || '%' 
+               OR m.unidad_medida LIKE '%' || :busqueda || '%' 
+               OR e.nombre_equipo LIKE '%' || :busqueda || '%' 
+               OR e.codigo_equipo LIKE '%' || :busqueda || '%') 
+        ORDER BY m.id DESC
+    """)
+    fun buscarMedicionesPorCliente(clienteId: Int, busqueda: String): Flow<List<Medicion>>
 
     // QUERY: Filtra las mediciones de un equipo en específico por su ID
     @Query("SELECT * FROM tabla_mediciones WHERE equipo_id = :equipoId ORDER BY id DESC")

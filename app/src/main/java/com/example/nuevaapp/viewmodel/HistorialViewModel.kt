@@ -38,6 +38,7 @@ class HistorialViewModel(
     fun setUserContext(userId: Int, role: UserRole?) {
         _currentUserId.value = userId
         _userRole.value = role
+        _uiState.update { it.copy(userRole = role) }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -48,18 +49,29 @@ class HistorialViewModel(
             }
             .filter { (_, userId, role) -> role != null && (role == UserRole.ADMIN || userId > 0) }
             .flatMapLatest { (query, userId, role) ->
-                if (role == UserRole.ADMIN) {
-                    if (query.isBlank()) {
-                        medicionRepository.todasLasMediciones
-                    } else {
-                        medicionRepository.buscarMediciones(query)
+                when (role) {
+                    UserRole.ADMIN -> {
+                        if (query.isBlank()) {
+                            medicionRepository.todasLasMediciones
+                        } else {
+                            medicionRepository.buscarMediciones(query)
+                        }
                     }
-                } else {
-                    if (query.isBlank()) {
-                        medicionRepository.obtenerMedicionesPorUsuario(userId)
-                    } else {
-                        medicionRepository.buscarMedicionesPorUsuario(userId, query)
+                    UserRole.TECNICO -> {
+                        if (query.isBlank()) {
+                            medicionRepository.obtenerMedicionesPorTecnico(userId)
+                        } else {
+                            medicionRepository.buscarMedicionesPorTecnico(userId, query)
+                        }
                     }
+                    UserRole.CLIENTE -> {
+                        if (query.isBlank()) {
+                            medicionRepository.obtenerMedicionesPorCliente(userId)
+                        } else {
+                            medicionRepository.buscarMedicionesPorCliente(userId, query)
+                        }
+                    }
+                    null -> flowOf(emptyList())
                 }
             }
             .collect { listaFiltrada ->

@@ -7,11 +7,9 @@ import androidx.room.PrimaryKey
 // @Entity le indica a Room que esta clase representa una tabla en la base de datos SQLite.
 @Entity(tableName = "tabla_equipos")
 data class Equipo(
-    // @PrimaryKey(autoGenerate = true) declara 'id' como clave primaria e incrementa su valor automáticamente.
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
 
-    // @ColumnInfo asigna el nombre explícito de la columna dentro de la tabla en SQLite.
     @ColumnInfo(name = "nombre_equipo")
     val nombre: String,
 
@@ -22,5 +20,11 @@ data class Equipo(
     val ubicacion: String,    // Sector o planta donde se encuentra
 
     @ColumnInfo(name = "estado_equipo")
-    val estado: String = "Operativo" // Estado: Operativo, Falla, Mantenimiento
+    val estado: String = "Operativo", // Estado: Operativo, Falla, Mantenimiento
+
+    @ColumnInfo(name = "cliente_id")
+    val clienteId: Int = 0,
+
+    @ColumnInfo(name = "cliente_nombre")
+    val clienteNombre: String = ""
 )

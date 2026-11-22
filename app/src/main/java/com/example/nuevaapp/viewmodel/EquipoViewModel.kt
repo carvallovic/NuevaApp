@@ -5,30 +5,53 @@ import androidx.lifecycle.viewModelScope
 import com.example.nuevaapp.model.Equipo
 import com.example.nuevaapp.model.EquipoUiState
 import com.example.nuevaapp.repository.EquipoRepository
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class EquipoViewModel(private val repository: EquipoRepository) : ViewModel() {
 
-    // Estado privado mutable para evitar modificaciones externas directas.
     private val _uiState = MutableStateFlow(EquipoUiState(isLoading = true))
-    // Estado público inmutable expuesto a la vista (Compose).
     val uiState: StateFlow<EquipoUiState> = _uiState.asStateFlow()
 
+    private val _currentUserId = MutableStateFlow(-1)
+    private val _userRole = MutableStateFlow<UserRole?>(null)
+
     init {
+        cargarClientes()
         cargarEquipos()
     }
 
-    // Escucha continuamente los cambios en la tabla SQLite.
+    fun setUserContext(userId: Int, role: UserRole?) {
+        _currentUserId.value = userId
+        _userRole.value = role
+    }
+
+    private fun cargarClientes() {
+        viewModelScope.launch {
+            repository.clientes.collect { listaClientes ->
+                _uiState.update { it.copy(clientes = listaClientes) }
+            }
+        }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun cargarEquipos() {
         viewModelScope.launch {
-            repository.todosLosEquipos.collect { listaEquipos ->
+            combine(repository.todosLosEquipos, _currentUserId, _userRole) { lista, userId, role ->
+                Triple(lista, userId, role)
+            }
+            .map { (lista, userId, role) ->
+                if (role == UserRole.CLIENTE) {
+                    lista.filter { it.clienteId == userId }
+                } else {
+                    lista
+                }
+            }
+            .collect { listaFiltrada ->
                 _uiState.update {
                     it.copy(
-                        equipos = listaEquipos,
+                        equipos = listaFiltrada,
                         isLoading = false,
                         error = null
                     )
@@ -37,44 +60,38 @@ class EquipoViewModel(private val repository: EquipoRepository) : ViewModel() {
         }
     }
 
-    // Inserta un nuevo registro invocando la consulta de SQLite en segundo plano.
-    fun agregarEquipo(nombre: String, codigo: String, ubicacion: String, estado: String) {
-        if (nombre.isBlank() || codigo.isBlank()) {
-            _uiState.update { it.copy(error = "Nombre y código son obligatorios.") }
+    fun agregarEquipo(nombre: String, codigo: String, ubicacion: String, estado: String, clienteId: Int, clienteNombre: String) {
+        if (nombre.isBlank() || codigo.isBlank() || clienteId <= 0) {
+            _uiState.update { it.copy(error = "Nombre, código y cliente son obligatorios.") }
             return
         }
 
         viewModelScope.launch {
-            val nuevo = Equipo(nombre = nombre, codigo = codigo, ubicacion = ubicacion, estado = estado)
+            val nuevo = Equipo(
+                nombre = nombre,
+                codigo = codigo,
+                ubicacion = ubicacion,
+                estado = estado,
+                clienteId = clienteId,
+                clienteNombre = clienteNombre
+            )
             repository.insertarEquipo(nuevo)
+            _uiState.update { it.copy(error = null) }
         }
     }
 
-    // Actualiza un equipo existente en SQLite asociado al repositorio.
     fun editarEquipo(equipo: Equipo) {
-        if (equipo.nombre.isBlank() || equipo.codigo.isBlank()) {
-            _uiState.update { it.copy(error = "Nombre y código son obligatorios.") }
+        if (equipo.nombre.isBlank() || equipo.codigo.isBlank() || equipo.clienteId <= 0) {
+            _uiState.update { it.copy(error = "Nombre, código y cliente son obligatorios.") }
             return
         }
 
         viewModelScope.launch {
             repository.actualizarEquipo(equipo)
+            _uiState.update { it.copy(error = null) }
         }
     }
 
-    fun editarEquipo(id: Int, nombre: String, codigo: String, ubicacion: String, estado: String) {
-        if (nombre.isBlank() || codigo.isBlank()) {
-            _uiState.update { it.copy(error = "Nombre y código son obligatorios.") }
-            return
-        }
-
-        viewModelScope.launch {
-            val equipoActualizado = Equipo(id = id, nombre = nombre, codigo = codigo, ubicacion = ubicacion, estado = estado)
-            repository.actualizarEquipo(equipoActualizado)
-        }
-    }
-
-    // Elimina un equipo en SQLite.
     fun borrarEquipo(equipo: Equipo) {
         viewModelScope.launch {
             repository.eliminarEquipo(equipo)
