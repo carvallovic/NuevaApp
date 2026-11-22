@@ -48,8 +48,8 @@ abstract class AppDatabase : RoomDatabase() {
 
                         // 2. Equipos de Prueba:
                         // Cliente ID 5 (Cliente Induztek) con 2 equipos
-                        db.execSQL("INSERT INTO tabla_equipos (id, nombre_equipo, codigo_equipo, ubicacion_equipo, estado_equipo, cliente_id, cliente_nombre) SELECT 1, 'Transformador Principal', 'TR-501', 'Subestación Planta A', 'Operativo', 5, 'Cliente Induztek' WHERE NOT EXISTS (SELECT 1 FROM tabla_equipos WHERE id = 1)")
-                        db.execSQL("INSERT INTO tabla_equipos (id, nombre_equipo, codigo_equipo, ubicacion_equipo, estado_equipo, cliente_id, cliente_nombre) SELECT 2, 'Generador de Respuesto', 'GEN-502', 'Sala de Máquinas', 'Operativo', 5, 'Cliente Induztek' WHERE NOT EXISTS (SELECT 1 FROM tabla_equipos WHERE id = 2)")
+                        db.execSQL("INSERT INTO tabla_equipos (id, nombre_equipo, codigo_equipo, ubicacion_equipo, estado_equipo, cliente_id, cliente_nombre) SELECT 1, 'Transformador Principal', 'TR-501', 'Providencia, Región Metropolitana', 'Operativo', 5, 'Cliente Induztek' WHERE NOT EXISTS (SELECT 1 FROM tabla_equipos WHERE id = 1)")
+                        db.execSQL("INSERT INTO tabla_equipos (id, nombre_equipo, codigo_equipo, ubicacion_equipo, estado_equipo, cliente_id, cliente_nombre) SELECT 2, 'Generador de Respuesto', 'GEN-502', 'Huechuraba, Región Metropolitana', 'Operativo', 5, 'Cliente Induztek' WHERE NOT EXISTS (SELECT 1 FROM tabla_equipos WHERE id = 2)")
 
                         // Cliente ID 6 (Cliente Duoc) con 1 equipo
                         db.execSQL("INSERT INTO tabla_equipos (id, nombre_equipo, codigo_equipo, ubicacion_equipo, estado_equipo, cliente_id, cliente_nombre) SELECT 3, 'Tablero Eléctrico General', 'TG-601', 'Edificio Central', 'Operativo', 6, 'Cliente Duoc' WHERE NOT EXISTS (SELECT 1 FROM tabla_equipos WHERE id = 3)")
